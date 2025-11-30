@@ -1,340 +1,197 @@
 # 📚 React 19 use() Hook + Suspense + Error Boundary Demo
 
-Привіт! 👋 Це навчальний проект, який показує, як використовувати нові можливості **React 19**:
-- **use() Hook** - для отримання даних з Promise
-- **Suspense** - для управління станами завантаження
-- **Error Boundary** - для обробки помилок
-
+- **use() Hook** - for retrieving data from a Promise
+- **Suspense** - for managing loading states
+- **Error Boundary** - for handling errors
 
 ---
 
-## 📂 Структура проекту
+## 📂 Project Structure
 
 ```
 src/
-├── App.jsx                          # Головний компонент (входова точка)
-├── App.css                          # Стилі для всього додатку
+├── App.jsx                          # Main component (entry point)
+├── App.css                          # App-wide styles
 ├── main.jsx                         # React ROOT
 ├── components/
-│   ├── MessageComponent.jsx         # Компонент з use() hook
-│   ├── MessageComponent.css         # Стилі для MessageComponent
-│   └── ErrorBoundary.jsx            # Обробник помилок
+│   ├── MessageComponent.jsx         # Component using the use() hook
+│   ├── MessageComponent.css         # Styles for MessageComponent
+│   └── ErrorBoundary.jsx            # Error boundary component
 └── utils/
-    └── getMessage.js                # Функція для отримання Promise
+    └── getMessage.js                # Function that returns a Promise
 ```
 
 ---
 
-## 🚀 Як запустити проект
+## 🚀 How to Run the Project
 
-### 1️⃣ Встановлення залежностей
+### 1️⃣ Install dependencies
 ```bash
 npm install
 ```
 
-### 2️⃣ Запуск у режимі розробки
+### 2️⃣ Run in development mode
 ```bash
 npm run dev
 ```
 
-Потім відкрийте у браузері:
+Then open in your browser:
 ```
 http://localhost:5173
 ```
 
-### 3️⃣ Побудова для production
+### 3️⃣ Build for production
 ```bash
 npm run build
 ```
 
 ---
 
-## 📖 Як це працює (для новачків)
-
-### Схема роботи додатку
+### App Flow Diagram
 
 ```
-1. Користувач заходить на сайт
+1. User opens the site
    ↓
-2. App.jsx створює Promise (симуляція запиту на сервер)
+2. App.jsx creates a Promise (simulating a server request)
    ↓
-3. Promise передається в MessageComponent
+3. The Promise is passed to MessageComponent
    ↓
-4. Suspense показує "⏳ Loading..." (fallback)
+4. Suspense shows "⏳ Loading..." (fallback)
    ↓
-5. use() hook чекає на Promise (2 секунди)
+5. use() hook awaits the Promise (2 seconds)
    ↓
-6. Promise розв'язується з даними
+6. Promise resolves with data
    ↓
-7. MessageComponent показує дані користувачу
+7. MessageComponent displays the data to the user
 ```
 
-### Що коли щось пойде не так?
+### What if something goes wrong?
 
 ```
-1. Користувач натискає кнопку "❌ Test Error"
+1. User clicks "❌ Test Error"
    ↓
-2. App.jsx створює Promise, який буде помилкою
+2. App.jsx creates a Promise that will reject
    ↓
-3. Suspense показує "⏳ Loading..."
+3. Suspense shows "⏳ Loading..."
    ↓
-4. Promise помилка! ❌
+4. Promise fails! ❌
    ↓
-5. Error Boundary ловить помилку
+5. Error Boundary catches the error
    ↓
-6. Користувач бачить "Oops! Something went wrong"
+6. User sees "Oops! Something went wrong"
    ↓
-7. Користувач натискає "🔄 Try Again"
+7. User clicks "🔄 Try Again"
 ```
 
 ---
 
-## 🔧 Файли проекту (детальне пояснення)
+## 🔧 Project Files (Detailed Explanation)
 
-### 1. `App.jsx` - Головний компонент
+### 1. `App.jsx` - Main component
 
-**Що це робить:**
-- Створює 2 кнопки: "Load Data" та "Test Error"
-- Управляє станом (успіх чи помилка)
-- Обертає все у ErrorBoundary та Suspense
-
-**Ключові частини:**
-```jsx
-import { Suspense, useState } from "react";
-
-export default function App() {
-  // Стан для керування помилками
-  const [errorMode, setErrorMode] = useState(false);
-
-  // Створюємо Promise (дані або помилку)
-  const promise = errorMode 
-    ? getMessageWithError()        // Помилка
-    : getMessageWithDelay();       // Успіх
-
-  return (
-    <div className="app-container">
-      {/* Кнопки для тестування */}
-      <button onClick={handleReset}>✅ Load Data</button>
-      <button onClick={handleTestError}>❌ Test Error</button>
-
-      {/* ErrorBoundary ловить помилки */}
-      <ErrorBoundary>
-        {/* Suspense показує "Loading..." */}
-        <Suspense fallback={<div className="spinner"></div>}>
-          {/* MessageComponent отримує Promise */}
-          <MessageComponent messagePromise={promise} />
-        </Suspense>
-      </ErrorBoundary>
-    </div>
-  );
-}
-```
-
-**Для новачків:**
-- `useState` - це хук для управління даними (state)
-- `errorMode` - логічна змінна (true/false)
-- Коли натискається кнопка, `errorMode` змінюється
-- Нова `Promise` створюється
+What it does:
+- Creates 2 buttons: "Load Data" and "Test Error"
+- Manages state (success or error)
+- Wraps everything with `ErrorBoundary` and `Suspense`
 
 ---
 
-### 2. `MessageComponent.jsx` - Компонент з use()
+### 2. `MessageComponent.jsx` - Component using `use()`
 
-**Що це робить:**
-- Отримує Promise як пропс
-- Використовує `use()` для отримання даних
-- Показує дані користувачу
+What it does:
+- Receives a Promise as a prop
+- Uses `use()` to obtain the data
+- Renders the data to the user
 
-**Код:**
-```jsx
-import { use } from "react";
-
-export default function MessageComponent({ messagePromise }) {
-  // use() отримує дані з Promise
-  // Якщо Promise ще не готовий → Suspense показує fallback
-  // Якщо Promise помилка → Error Boundary ловить помилку
-  const message = use(messagePromise);
-
-  return (
-    <div className="message-container">
-      <div className="message-card">
-        <h2>📨 Received Message:</h2>
-        <p className="message-text">{message}</p>
-        <small className="message-timestamp">
-          Loaded at {new Date().toLocaleTimeString()}
-        </small>
-      </div>
-    </div>
-  );
-}
-```
-
-**Для новачків:**
-- `messagePromise` - це пропс (параметр компонента)
-- `use()` - новий хук в React 19
-- `use()` повертає дані коли Promise готовий
-- Якщо Promise ще не готовий, компонент "зависає" (Suspense показує fallback)
-
-⚠️ **ВАЖЛИВО:** Не використовуйте `try-catch` з `use()`! Замість цього використовуйте Error Boundary.
+⚠️ IMPORTANT: Do NOT use `try-catch` with `use()`! Use an Error Boundary instead.
 
 ---
 
-### 3. `ErrorBoundary.jsx` - Обробник помилок
+### 3. `ErrorBoundary.jsx` - Error boundary
 
-**Що це робить:**
-- Ловить помилки з дітей компонентів
-- Показує красивий UI з помилкою
-- Надає кнопку "Try Again" для перезавантаження
+What it does:
+- Catches errors from child components
+- Shows a user-friendly error UI
+- Provides a "Try Again" button to reset/reload
 
-**Код (спрощено):**
-```jsx
-import React from "react";
-
-export default class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  // Цей метод викликається коли виникає помилка
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  // Цей метод логує помилку (для отладки)
-  componentDidCatch(error, errorInfo) {
-    console.error("Error:", error);
-  }
-
-  // Ловит помилку і показує UI
-  handleReset = () => {
-    this.setState({ hasError: false, error: null });
-  };
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="error-card">
-          <h2>❌ Oops! Something went wrong</h2>
-          <p>{this.state.error?.message}</p>
-          <button onClick={this.handleReset}>🔄 Try Again</button>
-        </div>
-      );
-    }
-
-    return this.props.children;  // Показуємо дітей якщо помилки немає
-  }
-}
-```
-
-**Для новачків:**
-- `class` компонент - це інший тип компонента (не функційний)
-- `getDerivedStateFromError` - спеціальний метод для ловління помилок
-- `this.state` - дані компонента
-- `setState` - функція для зміни даних
-
-⚠️ **ВАЖЛИВО:** Error Boundary ПОВИНЕН бути `class` компонентом!
+⚠️ IMPORTANT: Error Boundaries MUST be class components!
 
 ---
 
-### 4. `getMessage.js` - Функція для отримання Promise
+### 4. `getMessage.js` - Function that returns a Promise
 
-**Що це робить:**
-- Повертає Promise
-- Через 2 секунди Promise розв'язується (успіх або помилка)
-- Симулює запит на сервер
+What it does:
+- Returns a Promise
+- After 2 seconds the Promise resolves (success or failure)
+- Simulates a server request
 
-**Код:**
-```jsx
-export function getMessageWithDelay(shouldFail = false) {
-  return new Promise((resolve, reject) => {
-    // 2 секунди затримка (мережевий запит)
-    setTimeout(() => {
-      if (shouldFail) {
-        reject(new Error("Error loading data! Please try again."));
-      } else {
-        resolve("✓ Message loaded successfully!");
-      }
-    }, 2000);
-  });
-}
-
-export function getMessageWithError() {
-  return getMessageWithDelay(true);  // Завжди помилка
-}
-```
-
-- `Promise` - об'єкт для асинхронних операцій
-- `resolve()` - успіх
-- `reject()` - помилка
-- `setTimeout()` - функція для затримки
+Notes:
+- `Promise` — object for async operations  
+- `resolve()` — success  
+- `reject()` — error  
+- `setTimeout()` — delay function
 
 ---
 
+## 🧪 How to Test
 
-## 🧪 Як тестувати
+### Test 1️⃣: Successful load
 
-### Тест 1️⃣: Успішне завантаження
+1. Run `npm run dev`  
+2. Click the "✅ Load Data" button  
+3. See "⏳ Loading..."  
+4. After 2 seconds see the message
 
-1. Запустити `npm run dev`
-2. Натиснути кнопку "✅ Load Data"
-3. Побачити "⏳ Loading..."
-4. Через 2 секунди побачити повідомлення
-
-✅ Все спрацювало!
-
----
-
-### Тест 2️⃣: Обробка помилок
-
-1. Натиснути кнопку "❌ Test Error"
-2. Побачити "⏳ Loading..."
-3. Через 2 секунди побачити помилку (червона коробка)
-4. Натиснути кнопку "🔄 Try Again"
-5. Помилка зникла, можна спробувати знову
-
-✅ Error Boundary спрацював!
+✅ It worked!
 
 ---
 
-## 🐛 Якщо щось не працює
+### Test 2️⃣: Error handling
 
-### Помилка: "use is not defined"
-**Рішення:** Переконайтеся, що імпортовано `use` з `react`:
+1. Click the "❌ Test Error" button  
+2. See "⏳ Loading..."  
+3. After 2 seconds see the error (red box)  
+4. Click the "🔄 Try Again" button  
+5. The error clears and you can try again
+
+✅ Error Boundary worked!
+
+---
+
+## 🐛 Troubleshooting
+
+### Error: "use is not defined"
+Solution: Make sure `use` is imported from React:
 ```jsx
 import { use } from "react";
 ```
 
-### Помилка: "Suspense didn't load data"
-**Рішення:** Перевірте, що компонент обернутий у Suspense:
+### Error: "Suspense didn't load data"
+Solution: Verify the component is wrapped in `Suspense`:
 ```jsx
 <Suspense fallback={<div>Loading...</div>}>
   <YourComponent />
 </Suspense>
 ```
 
-### Error Boundary не ловить помилку
-**Рішення:** Error Boundary ПОВИНЕН бути `class` компонент, не функційний!
+### Error Boundary doesn't catch the error
+Solution: Error Boundary MUST be a class component, not a functional component!
 
 ---
 
-## 📚 Корисні посилання
+## 📚 Useful Links
 
-- [React 19 документація](https://react.dev)
-- [Suspense документація](https://react.dev/reference/react/Suspense)
+- [React 19 documentation](https://react.dev)  
+- [Suspense documentation](https://react.dev/reference/react/Suspense)  
 - [Error Boundary](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
 
 ---
 
+## 📝 Summary
 
-
-## 📝 Резюме
-
-Цей проект показує:
-- ✅ Як користувати `use()` hook в React 19
-- ✅ Як показувати екран завантаження (Suspense)
-- ✅ Як обробляти помилки (Error Boundary)
-
+This project demonstrates:
+- ✅ How to use the `use()` hook in React 19  
+- ✅ How to display a loading screen with `Suspense`  
+- ✅ How to handle errors with an Error Boundary
 
 ---
-
